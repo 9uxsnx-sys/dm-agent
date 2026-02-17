@@ -73,7 +73,7 @@ Create `.env`:
 ```bash
 DATABASE_URL=sqlite+aiosqlite:///./test.db
 REDIS_URL=redis://localhost:6379/0
-GEMINI_API_KEY=your-api-key-here
+HF_API_KEY=your-huggingface-api-key-here
 ENVIRONMENT=development
 ```
 
@@ -84,8 +84,8 @@ uvicorn app.main:app --reload
 
 ## 🔧 Using Real LLM (Not Mock)
 
-1. Remove from test files: `from tests import test_config`
-2. Set real API key: `GEMINI_API_KEY=your-key`
+1. Get HuggingFace API key from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. Set in `.env`: `HF_API_KEY=your-huggingface-api-key`
 3. Run tests: `pytest tests/`
 
 ## 📁 Project Structure

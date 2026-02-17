@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # AI Sales Agent Backend
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/ai_sales_agent
+      - REDIS_URL=redis://redis:6379/0
+      - HF_API_KEY=${HF_API_KEY}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - ENVIRONMENT=production
+      - USE_MOCK_REDIS=false
+    depends_on:
+      - db
+      - redis
+    networks:
+      - ai-network
+
+  # Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=ai_sales_agent
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-network
+
+  # Redis for state management and caching
+  redis:
+    image: redis:7-alpine
+    networks:
+      - ai-network
+
+  # n8n for workflow automation
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/home/node/.n8n/workflows:ro
+    networks:
+      - ai-network
+    depends_on:
+      - app
+
+networks:
+  ai-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  n8n_data:

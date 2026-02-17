@@ -1,0 +1,94 @@
+{
+  "name": "AI Sales Agent Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "incoming-message",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "webhook-1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format the incoming message for the AI Agent\nconst input = $input.first().json;\n\nconst formattedMessage = {\n  user: input.body.user_id || input.body.user || 'unknown',\n  message: input.body.message || input.body.text || '',\n  platform: input.body.platform || 'web',\n  timestamp: new Date().toISOString()\n};\n\nreturn [formattedMessage];"
+      },
+      "name": "Format Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "id": "code-1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://app:8000/webhook",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "user": "={{ $json.user }}",
+          "message": "={{ $json.message }}",
+          "platform": "={{ $json.platform }}"
+        },
+        "options": {}
+      },
+      "name": "AI Agent HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300],
+      "id": "http-1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "id": "response-1"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
